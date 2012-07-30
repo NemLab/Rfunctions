@@ -934,6 +934,7 @@ modelingFormat <- function(flowset,strain_vec,baseline="noYFP",normalize=F,ploid
 # Expects the 'FL1.A_bs' column to exist (not hard to extend to others/make it user selectable)
 # Has two different methods, version 1 and version 2, described in the script
 addnorm <- function(frame,factor_in=c("strain","treatment"),method=1,column="FL1.Amean_bs") {
+    library(plyr)
 	if ( (sum(colnames(frame)==column)) == 0 ) {
 		if( (sum(colnames(frame)=="FL1.A_bs")) == 0 ) {
 			stop("Could not find the background-subtracted values column. \
