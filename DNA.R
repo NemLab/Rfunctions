@@ -40,7 +40,7 @@ write.XStringSet.path <- function(XStringObject,path="./") {
 }
 ### write.IDT:
 ### Takes a data frame of the type returned by designprimer.list
-### And writes it out to a format that IDT will accept
+### and writes it out to a format that IDT will accept
 write.IDT <- function(primertable,file=paste("IDT-primers-",format(Sys.time(), "%Y.%m.%d-%H.%M.%S"),".csv",sep="")) {
 	# Defaults to writing out the primer set + date + time, to the second.
 	write.table(primertable,
@@ -769,9 +769,9 @@ designprimer.gene <- function(sequence,tails=F) {
     return(result)
 }
 
-designprimer.gene.gateway <- function(sequence,tail1=gateway1,tail2=gateway2) {
+designprimer.gene.gateway <- function(sequence,tm,tail1=gateway1,tail2=gateway2) {
 	#convert to uppercase
-	primers <- designprimer.gene(sequence,tails=c(tail1,tail2))
+	primers <- designprimer.gene(sequence,tm=tm,tails=c(tail1,tail2))
 
     return(primers)
 }

@@ -4,9 +4,10 @@
 # To install these, run these commands in R:
 # 	source("http://bioconductor.org/biocLite.R")
 # 	biocLite("flowCore")
+# 	biocLite("flowViz")
 #
-# The most useful script for an R newbie is 'summary.cyt'. It's effectively a wrapper for several other functions
-# and will take a flowSet (see flowCore documentation) and run some QA, gate, and get summary FL1.A (or other channel) data
+# The most useful script for an R newbie is 'summary.cyt'.
+# It will take a flowSet (see flowCore documentation) and run some QA, gate, and get summary FL1.A (or other channel) data
 # as well as experiment information like the time of day and events/µL concentration.
 
 library(flowViz)
@@ -29,7 +30,7 @@ library(flowViz)
 
 	# As of 2011-10-26, it may be necessary to create a new yeastGate for diploids that truly cuts out dead cells.
 
-	# Used from 2011-02-22 on, excludes debris/non-yeast
+	# Used from 2011-02-22 to present, excludes debris/non-yeast
 	yeastGate <<- polygonGate(filterId="Yeast",
 	    .gate=matrix(c(400000,10000000,10000000,400000, 10000,10000,2300000,60000),
 	    ncol=2,nrow=4,dimnames=list(c("1","1","1","1"),c("FSC.A","SSC.A"))))
@@ -41,7 +42,7 @@ library(flowViz)
 	    ncol=2,nrow=4,dimnames=list(c("1","1","1","1"),c("FSC.A","SSC.A"))))
 
 
-	# Diploid Singlet gate, first created 2011-07-09
+	# Diploid Singlet gate, used 2011-07-09 to present
 	# Diploids are slightly larger and have better separation between singlets/doublets
 	dipsingletGate <<- polygonGate(filterId="DipSingletGate",
 		.gate=matrix(c(
@@ -52,7 +53,9 @@ library(flowViz)
 			ncol=2,nrow=5,dimnames=list(rep(NA,5),c("FSC.A","FSC.H"))
 			      )
 			     )
-	# Diploid Doublet gate, first created 2011-08-09
+
+
+	# Diploid Doublet gate, used 2011-08-09 to present
 	# Diploids are slightly larger and have better separation between singlets/doublets
 	dipdoubletGate <<- polygonGate(filterId="DipDoubletGate",
 		.gate=matrix(c(
@@ -65,7 +68,7 @@ library(flowViz)
 			     )
 
 
-	# Diploid Doublet gate, first created 2011-08-09
+	# Diploid Doublet gate, used 2011-08-09 to present
 	# Diploids are slightly larger and have better separation between singlets/doublets
 	hapdoubletGate <<- polygonGate(filterId="HaploidDoubletGate",
 		.gate=matrix(c(
@@ -77,7 +80,7 @@ library(flowViz)
 			      )
 			     )
 
-	# Used from 2012-02-22 and on
+	# Used 2012-02-22 to present 
 	hapsingletGate <<- polygonGate(filterId="HaploidSingletGate",
 		.gate=matrix(c(
 			#x values
@@ -88,12 +91,14 @@ library(flowViz)
 			      )
 			     )
 
-	# Used in auxin paper to gate all yeast from non-yeast. Also excludes a portion 
+    ####################
+    # Havens et al 2012#
+    ####################
+	# Used in auxin paper (Havens 2012) to gate all yeast from non-yeast. Also excludes a portion 
 	# of small-FSC.A, high-SSC.A cells (presumably dead).
 	auxinpaper_yeastGate <<- polygonGate(filterId="Yeast",
 	    .gate=matrix(c(400000,10000000,10000000,400000, 10000,10000,2300000,60000),
 	    ncol=2,nrow=4,dimnames=list(c("1","1","1","1"),c("FSC.A","SSC.A"))))
-
 	# Used in auxin paper to gate for singlets after gating with auxinpaper_yeastGate
 	auxinpaper_singletGate <<- polygonGate(filterId="DipSingletGate",
 		.gate=matrix(c(
@@ -104,7 +109,6 @@ library(flowViz)
 			ncol=2,nrow=5,dimnames=list(rep(NA,5),c("FSC.A","FSC.H"))
 			      )
 			     )
-
 	# Used in auxin paper to gate for doublets after gating with auxinpaper_yeastGate
 	auxinpaper_doubletGate <<- polygonGate(filterId="DipDoubletGate",
 		.gate=matrix(c(
@@ -135,6 +139,27 @@ library(flowViz)
 	    ncol=2,nrow=4,dimnames=list(c("1","1","1","1"),c("FSC.A","FSC.H"))))
 
 ## experimental gates
+
+    # mChGate - designed around data from cytometer experiment Nick did on 2012-9-19 (NB036)
+    # subsets cells with high FL3.A (mCherry) vs FL1.A (EYFP) output.
+    # Note that it was designed around cells that have both EYFP and mCherry and
+    # may not work for mCherry-only cells
+    mChGate <<- polygonGate(filterId='mCherryGate',
+                            matrix(c(5e2,2e3,4e4,7e4,8e3,5e2, 2e3,2e3,1.8e4,9e4,8e4,4e3),
+                                ncol=2,
+                                nrow=6,
+                                dimname=list(c(1,1,1,1,1,1),c("FL1.A","FL3.A")))
+                            )
+
+    # Same motivatio as the mChGate - separate EYFP+mCh cells from EYFP cells. In this case,
+    # subsets for EYFP-only cells. Again, may only work for this particular experiment type
+    EYFPGate <<- polygonGate(filterId='EYFPGate',
+                             matrix(c(0,4e3,3e4,3e4,3e3,0, 0,0,4e3,9e3,2e3,2e3),
+                                ncol=2,
+                                nrow=6,
+                                dimname=list(c(1,1,1,1,1,1),c("FL1.A","FL3.A"))
+                                )
+                            )
 
 	# Diploid Singlet gate, first created 2011-07-09
 	# Diploids are slightly larger and have better separation between singlets/doublets
@@ -187,8 +212,6 @@ library(flowViz)
 ###########################
 ###  Cytometer Scripts  ###
 ###########################
-
-
 
 ### polygate:
 ### Make a gate easier?
