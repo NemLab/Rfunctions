@@ -2,6 +2,7 @@
 ### General Scripts ###
 #######################
 
+
 ### read.Rdata
 ### Allows .Rdata objects to be read into single variables
 ### By default, 'load' loads a bunch of unwanted stuff, which this avoids
@@ -37,6 +38,49 @@ addmediadilution <- function(c1,c2,v1) {
 }
 
 theme_clean <- function(base_size = 12) {
+ library(grid)
+ structure(list(
+    axis.line =         element_line(size=.5),
+    axis.text.x =       element_text(size = base_size * 0.8 , lineheight = 0.9, vjust = 1),
+    axis.text.y =       element_text(size = base_size * 0.8, lineheight = 0.9, hjust = 1),
+    axis.ticks =        element_line(colour = "black", size = 0.4),
+    axis.title.x =      element_text(size = base_size, vjust = 0),
+    axis.title.y =      element_text(size = base_size, angle = 90, vjust = 0.5),
+    axis.ticks.length = unit(0.3, "lines"),
+    axis.ticks.margin = unit(0.5, "lines"),
+
+    legend.background = element_blank(),
+    legend.key =        element_blank(),
+#    legend.key =        element_rect(colour = "grey80"),
+#    legend.key.size =   unit(6.2, "lines"),
+    legend.key.size =   unit(1.2, "lines"),
+    legend.text =       element_text(size = base_size * 0.8),
+    legend.title =      element_text(size = base_size * 0.8, face = "bold", hjust = 0),
+    legend.position =   "right",
+
+    panel.background =  element_blank(),
+#    panel.background =  element_rect(fill = "white", colour = NA),
+#    panel.background =  element_blank(),
+    panel.border =      element_blank(),
+    panel.grid.major =  element_blank(),
+    panel.grid.minor =  element_blank(),
+#    panel.margin =      unit(0.3, "lines"),
+    panel.margin =      unit(0.4, "lines"),
+
+#    strip.background =  element_rect(fill = "grey80",colour="grey80", size = 0.25),
+    strip.background =  element_rect(fill = 'NA',colour='NA', size = 0.25),
+    strip.label =       function(variable, value) value,
+    strip.text.x =      element_text(size = base_size * 0.8),
+    strip.text.y =      element_text(size = base_size * 0.8, angle = -90),
+
+    plot.background =   element_rect(colour = NA),
+    plot.title =        element_text(size = base_size * 1.2),
+    plot.margin =       unit(c(1, 1, 0.5, 0.5), "lines")
+  ), class = "options")
+}
+
+theme_clean_old <- function(base_size = 12) {
+ library(grid)
  structure(list(
     axis.line =         theme_segment(size=.5),
     axis.text.x =       theme_text(size = base_size * 0.8 , lineheight = 0.9, vjust = 1),
@@ -76,7 +120,6 @@ theme_clean <- function(base_size = 12) {
     plot.margin =       unit(c(1, 1, 0.5, 0.5), "lines")
   ), class = "options")
 }
-
 
 ###########################
 ### Third-Party Scripts ###
