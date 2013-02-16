@@ -91,7 +91,7 @@ theme_clean <- function(base_size = 12, base_family = "") {
   )
 }
 
-theme_clean_original <- function(base_size = 12) {
+theme_clean_old <- function(base_size = 12) {
  library(grid)
  structure(list(
     axis.line =         theme_segment(size=.5),
