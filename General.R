@@ -37,49 +37,61 @@ addmediadilution <- function(c1,c2,v1) {
     return(x)
 }
 
-theme_clean <- function(base_size = 12) {
- library(grid)
- structure(list(
-    axis.line =         element_line(size=.5),
-    axis.text.x =       element_text(size = base_size * 0.8 , lineheight = 0.9, vjust = 1),
-    axis.text.y =       element_text(size = base_size * 0.8, lineheight = 0.9, hjust = 1),
-    axis.ticks =        element_line(colour = "black", size = 0.4),
-    axis.title.x =      element_text(size = base_size, vjust = 0),
-    axis.title.y =      element_text(size = base_size, angle = 90, vjust = 0.5),
-    axis.ticks.length = unit(0.3, "lines"),
-    axis.ticks.margin = unit(0.5, "lines"),
+theme_clean <- function(base_size = 12, base_family = "") {
+  library(grid) # sometimes required for 'unit' function
+  theme(
+    line =               element_line(colour = "black", size = 0.5, linetype = 1,
+                            lineend = "butt"),
+    rect =               element_rect(fill = "white", colour = "black", size = 0.5, linetype = 1),
+    text =               element_text(family = base_family, face = "plain",
+                            colour = "black", size = base_size,
+                            hjust = 0.5, vjust = 0.5, angle = 0, lineheight = 0.9),
+    axis.text =          element_text(size = rel(0.8), colour = "black"),
+    strip.text =         element_text(size = rel(0.8)),
 
-    legend.background = element_blank(),
-    legend.key =        element_blank(),
-#    legend.key =        element_rect(colour = "grey80"),
-#    legend.key.size =   unit(6.2, "lines"),
-    legend.key.size =   unit(1.2, "lines"),
-    legend.text =       element_text(size = base_size * 0.8),
-    legend.title =      element_text(size = base_size * 0.8, face = "bold", hjust = 0),
-    legend.position =   "right",
+    axis.line =          element_line(size = 0.5),
+    axis.text.x =        element_text(vjust = 1),
+    axis.text.y =        element_text(hjust = 1),
+    axis.ticks =         element_line(colour = "black"),
+    axis.title.x =       element_text(),
+    axis.title.y =       element_text(angle = 90),
+    axis.ticks.length =  unit(0.15, "cm"),
+    axis.ticks.margin =  unit(0.1, "cm"),
 
-    panel.background =  element_blank(),
-#    panel.background =  element_rect(fill = "white", colour = NA),
-#    panel.background =  element_blank(),
-    panel.border =      element_blank(),
-    panel.grid.major =  element_blank(),
-    panel.grid.minor =  element_blank(),
-#    panel.margin =      unit(0.3, "lines"),
-    panel.margin =      unit(0.4, "lines"),
+    legend.background =  element_rect(colour = NA),
+    legend.margin =      unit(0.2, "cm"),
+    legend.key =         element_rect(fill = NA, colour = NA),
+    legend.key.size =    unit(1.2, "lines"),
+    legend.key.height =  NULL,
+    legend.key.width =   NULL,
+    legend.text =        element_text(size = rel(0.8)),
+    legend.text.align =  NULL,
+    legend.title =       element_text(size = rel(0.8), face = "bold", hjust = 0),
+    legend.title.align = NULL,
+    legend.position =    "right",
+    legend.direction =   NULL,
+    legend.justification = "center",
+    legend.box =         NULL,
 
-#    strip.background =  element_rect(fill = "grey80",colour="grey80", size = 0.25),
-    strip.background =  element_rect(fill = 'NA',colour='NA', size = 0.25),
-    strip.label =       function(variable, value) value,
-    strip.text.x =      element_text(size = base_size * 0.8),
-    strip.text.y =      element_text(size = base_size * 0.8, angle = -90),
+    panel.background =   element_blank(),
+    panel.border =       element_blank(),
+    panel.grid.major =   element_blank(),
+    panel.grid.minor =   element_blank(),
+    panel.margin =       unit(0.25, "lines"),
 
-    plot.background =   element_rect(colour = NA),
-    plot.title =        element_text(size = base_size * 1.2),
-    plot.margin =       unit(c(1, 1, 0.5, 0.5), "lines")
-  ), class = "options")
+    strip.background =   element_rect(fill = NA, colour = NA),
+    strip.text.x =       element_text(),
+    strip.text.y =       element_text(angle = -90),
+
+    plot.background =    element_rect(colour = NA),
+    plot.title =         element_text(size = rel(1.2)),
+    plot.margin =        unit(c(1, 1, 0.5, 0.5), "lines"),
+
+    complete = TRUE
+  )
 }
 
-theme_clean_old <- function(base_size = 12) {
+theme_clean_original <- function(base_size = 12) {
  library(grid)
  structure(list(
     axis.line =         theme_segment(size=.5),
