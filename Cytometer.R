@@ -1000,7 +1000,7 @@ addnorm <- function(frame,factor_in=c("strain","treatment"),method=1,column="FL1
 			return(x)
 		}
 	} else {
-		stop("You must define version=1, version=2, or version=3)")
+		stop("You must define method=1, method=2, or method=3)")
 	}
 
 	# Check for negative time values
