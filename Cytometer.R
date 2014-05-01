@@ -35,7 +35,6 @@ library(flowViz)
 	    .gate=matrix(c(400000,10000000,10000000,400000, 10000,10000,2300000,60000),
 	    ncol=2,nrow=4,dimnames=list(c("1","1","1","1"),c("FSC.A","SSC.A"))))
 
-
 	# Used until cytometer was switched around 2011-02-22
 	oldyeastGate <<- polygonGate(filterId="Yeast",
 		.gate=matrix(c(160000,1500000,1500000,160000, 0,0,200000,200000),
@@ -53,7 +52,6 @@ library(flowViz)
 			ncol=2,nrow=5,dimnames=list(rep(NA,5),c("FSC.A","FSC.H"))
 			      )
 			     )
-
 
 	# Diploid Doublet gate, used 2011-08-09 to present
 	# Diploids are slightly larger and have better separation between singlets/doublets
@@ -80,7 +78,7 @@ library(flowViz)
 			      )
 			     )
 
-	# Used 2012-02-22 to present 
+	# Used 2012-02-22 to present
 	hapsingletGate <<- polygonGate(filterId="HaploidSingletGate",
 		.gate=matrix(c(
 			#x values
@@ -94,7 +92,7 @@ library(flowViz)
     ####################
     # Havens et al 2012#
     ####################
-	# Used in auxin paper (Havens 2012) to gate all yeast from non-yeast. Also excludes a portion 
+	# Used in auxin paper (Havens 2012) to gate all yeast from non-yeast. Also excludes a portion
 	# of small-FSC.A, high-SSC.A cells (presumably dead).
 	auxinpaper_yeastGate <<- polygonGate(filterId="Yeast",
 	    .gate=matrix(c(400000,10000000,10000000,400000, 10000,10000,2300000,60000),
@@ -175,31 +173,31 @@ library(flowViz)
 
 	# for diploids, highlights dead cells
 	deadGate <<- polygonGate(filterId="deadGate",
-		.gate=matrix(c(7.5e5,13e5,3e6,15e5,6e5,      
-				1e5,2e5,7.5e5,4e5,2e5),   
+		.gate=matrix(c(7.5e5,13e5,3e6,15e5,6e5,
+				1e5,2e5,7.5e5,4e5,2e5),
 				ncol=2,nrow=5,dimnames=list(rep(NA,5),c("FSC.A","SSC.A")))
 			)
 
 	# for diploids, takes small-sized cells, maybe could use for excluding dead cells when combined with clustering
 	deadexcludeGate <<- polygonGate(filterId="deadGate",
-                .gate=matrix(c(7.5e5,4e6,3e6,1.5e6,6e5,      
+                .gate=matrix(c(7.5e5,4e6,3e6,1.5e6,6e5,
 				0,0,7.5e5,8e5,2e5),
-                                ncol=2,nrow=5,dimnames=list(rep(NA,5),c("FSC.A","SSC.A"))) 
+                                ncol=2,nrow=5,dimnames=list(rep(NA,5),c("FSC.A","SSC.A")))
                         )
 
 	# for diploids, is a little more generous than 'dipsingletGate' Combine with flowClust to clean it up
 	dipsingletGate2 <<- polygonGate(filterId="DipSingletGate",
-		.gate=matrix(c( 
-			7.5e5,14e5,30e5,15e5,6e5,  
-			9e5,16e5,35e5,40e5,15e5),  
+		.gate=matrix(c(
+			7.5e5,14e5,30e5,15e5,6e5,
+			9e5,16e5,35e5,40e5,15e5),
 			ncol=2,nrow=5,dimnames=list(rep(NA,5),c("FSC.A","FSC.H"))))
 
 	# excludes the big-cell subpopulation, it might be sick/weird/less comparable
 	# use !excludeBig to exclude them.
 	excludeBig <<- polygonGate(filterId="excludeBig",
 		.gate=matrix(c(
-                        3e6,2e7,2e7,2e7,3e6,  
-                        1e6,16e5,5e6,1e7,1e7),  
+                        3e6,2e7,2e7,2e7,3e6,
+                        1e6,16e5,5e6,1e7,1e7),
                         ncol=2,nrow=5,dimnames=list(rep(NA,5),c("FSC.A","FSC.H"))))
 
     # Rob's gate for E. coli
@@ -330,7 +328,7 @@ fl1transform <- function(x,transform=F) {
 	if (!qa.result) {
 		x <- trans(x)
 #		x <- transform(x,FL1.A=FL1.A/FSC.A*10^4)
-	} else { 
+	} else {
 		# For loop is inefficient, switch this out for fsApply while maintaining all cells
 		for (i in qa.result) {
 			x[[i]] <- trans(x)
@@ -488,42 +486,59 @@ summary.cyt <- function(
 
 
 	# Gate the samples
+	yeast <- Subset(flowset,yeastGate)
+    # Remove flowFrames that have no yeast - bug in bioconductor <= 2.13
+    # TODO: replace with an empty / NA row in the final dataframe
+    empties <- c()
+    for (i in 1:length(yeast)) {
+        if (length(exprs(yeast[[i]])) == 0) {
+            empties <- c(empties, i)
+        }
+    }
+    nonempties <- 1:length(yeast)
+    yeast_nonempty <- yeast[seq(along=yeast)]
+    if (length(empties) != 0) {
+        print(paste("The following indices had no events in the yeast gate and have been excluded from singlets/doublets:",
+              paste(empties, collapse=", ")))
+        for (i in empties) {
+            nonempties <- nonempties[which(nonempties != i)]
+        }
+        yeast_nonempty <- yeast_nonempty[nonempties]
+    }
 	if (ploidy=="haploid") {
 		print("Gating with haploid gates...")
-		yeast <- Subset(flowset,yeastGate)
-		singlets <- Subset(yeast,hapsingletGate)
-		doublets <- Subset(yeast,hapdoubletGate)
+		singlets <- Subset(yeast_nonempty,hapsingletGate)
+		doublets <- Subset(yeast_nonempty,hapdoubletGate)
 	} else if (ploidy=="diploid") {
 		print("Gating with diploid gates...")
-		yeast <- Subset(flowset,yeastGate)
-		singlets <- Subset(yeast,dipsingletGate)
-		doublets <- Subset(yeast,dipdoubletGate)
+		singlets <- Subset(yeast_nonempty,dipsingletGate)
+		doublets <- Subset(yeast_nonempty,dipdoubletGate)
 	} else {
 		stop('Error: You must define ploidy="haploid" or ploidy="diploid"')
 	}
 
 	if (only==F) {
-		# Normalize and summarize each subset
-		print("Summarizing all yeast events...")
-		yeastsum <- flsummary(yeast,channel=channel,moments=moments,split=split,transform=transform)
+	    # Normalize and summarize each subset
+	    print("Summarizing all yeast events...")
+	    yeastsum <- flsummary(yeast,channel=channel,moments=moments,split=split,transform=transform)
 
-		print("Summarizing doublets events...")
-		doubletsum <- flsummary(doublets,channel=channel,moments=moments,split=split,transform=transform)
+	    print("Summarizing doublets events...")
+	    doubletsum <- flsummary(doublets,channel=channel,moments=moments,split=split,transform=transform)
 
-		print("Summarizing singlets events...")
-		singletsum <- flsummary(singlets,channel=channel,moments=moments,split=split,transform=transform)
-	} else {
+	    print("Summarizing singlets events...")
+	    singletsum <- flsummary(singlets,channel=channel,moments=moments,split=split,transform=transform)
+    } else {
 		if (only=="singlets") {
-			print("Summarizing singlets events...")
-			singletsum <- flsummary(singlets,channel=channel,moments=moments,split=split,transform=transform)
+    	    print("Summarizing singlets events...")
+    	    singletsum <- flsummary(singlets,channel=channel,moments=moments,split=split,transform=transform)
 			return(singletsum)
 		} else if (only=="doublets") {
-			print("Summarizing doublets events...")
-			doubletsum <- flsummary(doublets,channel=channel,moments=moments,split=split,transform=transform)
+    	    print("Summarizing doublets events...")
+    	    doubletsum <- flsummary(doublets,channel=channel,moments=moments,split=split,transform=transform)
 			return(doubletsum)
 		} else if (only=="yeast") {
-			print("Summarizing all yeast events...")
-			yeastsum <- flsummary(yeast,channel=channel,moments=moments,split=split,transform=transform)
+    	    print("Summarizing all yeast events...")
+    	    yeastsum <- flsummary(yeast,channel=channel,moments=moments,split=split,transform=transform)
 			return(yeastsum)
 		} else {
 			print("'only' must be 'singlets','doublets', or 'yeast'")
@@ -595,7 +610,7 @@ yeastThreePopSplit <- function(flowframe){
 
 
 ### flowFrame2Table:
-### Generates a full table (data frame) of a flowFrame's data values 
+### Generates a full table (data frame) of a flowFrame's data values
 ### with appropriate labels
 flowFrame2Table <- function(flowframe) {
 	flowframetable <- data.frame(exprs(flowframe),ncol=10)
@@ -614,7 +629,7 @@ thalfall <- function(x,minval=F) {
 	strain_treatment <- paste(x$strain,x$treatment,sep=",,")
 	all_levels <- levels(as.factor(strain_treatment))
 	x$strain_treatment <- strain_treatment
-	
+
 	# NOW I KNOW THE DATA FRAME SIZE
 	tablelen <- length(all_levels)
 	thalftable <- data.frame(matrix(ncol=5,nrow=tablelen))
@@ -686,7 +701,7 @@ qplot.logistic <- function(timeseriesdata,minval=F) {
 
 ### predict.logistic:
 ### Generates a data table based on a logistic fit object
-### Right now, only works w/ variables "mean" and "time", 
+### Right now, only works w/ variables "mean" and "time",
 ### but could easily be changed to dynamically name
 
 predict.logistic <- function(fitobject) {
