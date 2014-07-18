@@ -10,11 +10,11 @@
 # source("~/Desktop/RCytSummary.R")
 # Substitute ~/Desktop/RCytSummary.R for wherever you actually saved the file.
 #
-# The command to run is called CytSummmary, and it takes two arguments: 
+# The command to run is called CytSummmary, and it takes two arguments:
 #   1) the input path for your cytometry data, which should contain *only* a bunch of FCS files.
 #   2) the output path for the summary data, in csv format (can open with excel or matlab or R or python)
 # Example: CytSummary("~/Desktop/CytometryFiles/experiment-2012-02-17/","~/Desktop/")
-# This would read all files in Desktop/CytometryFiles/experiment-2012-02-17, gate to the E. coli population, 
+# This would read all files in Desktop/CytometryFiles/experiment-2012-02-17, gate to the E. coli population,
 # then provide summary information for each well in a csv on the desktop, automatically named by the date and time.
 require(flowCore)
 
@@ -24,7 +24,7 @@ CytSummary <- function(filepath, outpath) {
 
 	## Read in flowSet
 
-	fs = read.flowSet(path=filepath, alter.names=T)
+	fs = read.flowSet(path=filepath, alter.names=TRUE)
 
 	fs_gated=Subset(fs, ecoligate)  ##gating all data to Rob's ecoli gate
 	fs_qad <- fs_gated
@@ -38,9 +38,9 @@ CytSummary <- function(filepath, outpath) {
 
 	totalsummary=cbind(gfp[,1:FL1_index],rfp[,FL3_index:length(colnames(rfp))])
 
-	filename=paste( "summary-",format(Sys.time(), "%Y-%m-%d--%H-%M-%S"),sep="")	
+	filename=paste( "summary-",format(Sys.time(), "%Y-%m-%d--%H-%M-%S"),sep="")
 
-	## Following allows for it not to matter if the outpath has a / or not at the end of it 
+	## Following allows for it not to matter if the outpath has a / or not at the end of it
 	## As well as adding .CSV to the end of the file path to make it easier to open in Excel
 
 	outpathlength=length(outpath)
@@ -85,7 +85,7 @@ flsummary <- function(flowset,channel="FL1.A",moments=F,split=F,transform=F) {
 	# Acquisition time - how long it took to take the sample, in seconds
 	atime <- fsApply(flowset,function(x)as.numeric(keyword(x)$`#ACQUISITIONTIMEMILLI`)/1000)
 
-	events <- fsApply(flowset,function(x)length(x[,1]),use.exprs=T)
+	events <- fsApply(flowset,function(x)length(x[,1]),use.exprs=TRUE)
 	uL <- fsApply(flowset,function(x)as.integer(keyword(x)$`$VOL`)/1000)
 	conc <- events/uL
 
@@ -95,16 +95,16 @@ flsummary <- function(flowset,channel="FL1.A",moments=F,split=F,transform=F) {
 		}
 	}
 
-	fl_mean <- fsApply(flowset,function(x)mean(x[,channel]),use.exprs=T)
-	fl_median <- fsApply(flowset,function(x)median(x[,channel]),use.exprs=T)
-	fl_sd <- fsApply(flowset,function(x)sd(x[,channel]),use.exprs=T)
+	fl_mean <- fsApply(flowset,function(x)mean(x[,channel]),use.exprs=TRUE)
+	fl_median <- fsApply(flowset,function(x)median(x[,channel]),use.exprs=TRUE)
+	fl_sd <- fsApply(flowset,function(x)sd(x[,channel]),use.exprs=TRUE)
 	fl <- data.frame(fl_mean,fl_median,fl_sd)
 	colnames(fl) <- paste(channel,c("mean","median","sd"),sep="")
 
 	# Do we want mean fl values for data split into 4 evenly sized chunks?
-	if (split==T) {
+	if (split==TRUE) {
 		split_table <- fsApply(flowset,splitFrame)
-		split_table <- data.frame(matrix(unlist(split_table),ncol=4,byrow=T))
+		split_table <- data.frame(matrix(unlist(split_table),ncol=4,byrow=TRUE))
 		colnames(split_table) <- paste("split",1:4,sep="")
 		fl <- cbind(fl,split_table)
 	}
@@ -112,9 +112,9 @@ flsummary <- function(flowset,channel="FL1.A",moments=F,split=F,transform=F) {
 	# Do we want the first few moments?
 	if (moments == T) {
 		require(moments)
-		fl_var <- data.frame(fsApply(flowset,function(x)var(x[,channel]),use.exprs=T))
-		fl_skew <- data.frame(fsApply(flowset,function(x)skewness(x[,channel]),use.exprs=T))
-		fl_kurt <- data.frame(fsApply(flowset,function(x)kurtosis(x[,channel]),use.exprs=T))
+		fl_var <- data.frame(fsApply(flowset,function(x)var(x[,channel]),use.exprs=TRUE))
+		fl_skew <- data.frame(fsApply(flowset,function(x)skewness(x[,channel]),use.exprs=TRUE))
+		fl_kurt <- data.frame(fsApply(flowset,function(x)kurtosis(x[,channel]),use.exprs=TRUE))
 		fl_moments <- data.frame(fl_var,fl_skew,fl_kurt)
 		colnames(fl_moments) <- paste(channel,c("var","skew","kurt"),sep="")
 		fl <- cbind(fl,fl_moments)
