@@ -258,7 +258,7 @@ qa.gating <- function(x,threshold=100) {
 	if(x.class=="flowFrame") {
 		counts <- length(exprs(x[,1]))
 	} else if(x.class=="flowSet") {
-		counts <- fsApply(x,length,use.exprs=T)
+		counts <- fsApply(x,length,use.exprs=TRUE)
 	} else {
 		print("Input must be a flowSet or flowFrame")
 	}
@@ -291,7 +291,7 @@ qa.gating <- function(x,threshold=100) {
 ### If you specify transform="log", it will simply do a log transform
 ### to FL1.A instead.
 
-fl1transform <- function(x,transform=F) {
+fl1transform <- function(x,transform=FALSE) {
 	# Default scaling is 10^4 and is solely for making results human-readable
 
 	# Handle both flowFrames and flowSets
@@ -318,7 +318,7 @@ fl1transform <- function(x,transform=F) {
 			x <- transform(x,FL1.A=FL1.A/FSC.A*10^4)
 		} else if (transform == "log") {
 			x <- transform(x,FL1.A=log(FL1.A))
-		} else if (transform == F) {
+		} else if (transform == FALSE) {
 			x <- x # do nothing.  Is this necessary?
 		} else {
 			stop("No legitimate transform set.  Use transform=\"log\" or transform=\"fscanorm\".")
@@ -348,14 +348,15 @@ fl1transform <- function(x,transform=F) {
 ### flsummary:
 ### Get summary statistics for fluorescence, other data
 
-flsummary <- function(flowset,channel="FL1.A",moments=F,split=F,transform=F) {
+flsummary <- function(flowset, channel="FL1.A", moments=FALSE, split=FALSE,
+                      transform=FALSE) {
 	# Number of cells (experiments) in the flowSet
 	n_experiment <- length(flowset)
 
 	# Initialize empty matrices/data frames to increase efficiency
 	warnings <- c()
 
-	if (moments == T) {
+	if (moments == TRUE) {
 		library(moments)
 	}
 
@@ -367,7 +368,7 @@ flsummary <- function(flowset,channel="FL1.A",moments=F,split=F,transform=F) {
 	# Acquisition time - how long it took to take the sample, in seconds
 	atime <- fsApply(flowset,function(x)as.numeric(keyword(x)$`#ACQUISITIONTIMEMILLI`)/1000)
 
-	events <- fsApply(flowset,function(x)length(x[,1]),use.exprs=T)
+	events <- fsApply(flowset,function(x)length(x[,1]),use.exprs=TRUE)
 	uL <- fsApply(flowset,function(x)as.integer(keyword(x)$`$VOL`)/1000)
 	conc <- events/uL
 
@@ -377,26 +378,26 @@ flsummary <- function(flowset,channel="FL1.A",moments=F,split=F,transform=F) {
 		}
 	}
 
-	fl_mean <- fsApply(flowset,function(x)mean(x[,channel]),use.exprs=T)
-	fl_median <- fsApply(flowset,function(x)median(x[,channel]),use.exprs=T)
-	fl_sd <- fsApply(flowset,function(x)sd(x[,channel]),use.exprs=T)
+	fl_mean <- fsApply(flowset,function(x)mean(x[,channel]),use.exprs=TRUE)
+	fl_median <- fsApply(flowset,function(x)median(x[,channel]),use.exprs=TRUE)
+	fl_sd <- fsApply(flowset,function(x)sd(x[,channel]),use.exprs=TRUE)
 	fl <- data.frame(fl_mean,fl_median,fl_sd)
 	colnames(fl) <- paste(channel,c("mean","median","sd"),sep="")
 
 	# Do we want mean fl values for data split into 4 evenly sized chunks?
-	if (split==T) {
+	if (split==TRUE) {
 		split_table <- fsApply(flowset,splitFrame)
-		split_table <- data.frame(matrix(unlist(split_table),ncol=4,byrow=T))
+		split_table <- data.frame(matrix(unlist(split_table),ncol=4,byrow=TRUE))
 		colnames(split_table) <- paste("split",1:4,sep="")
 		fl <- cbind(fl,split_table)
 	}
 
 	# Do we want the first few moments?
-	if (moments == T) {
+	if (moments == TRUE) {
 		require(moments)
-		fl_var <- data.frame(fsApply(flowset,function(x)var(x[,channel]),use.exprs=T))
-		fl_skew <- data.frame(fsApply(flowset,function(x)skewness(x[,channel]),use.exprs=T))
-		fl_kurt <- data.frame(fsApply(flowset,function(x)kurtosis(x[,channel]),use.exprs=T))
+		fl_var <- data.frame(fsApply(flowset,function(x)var(x[,channel]),use.exprs=TRUE))
+		fl_skew <- data.frame(fsApply(flowset,function(x)skewness(x[,channel]),use.exprs=TRUE))
+		fl_kurt <- data.frame(fsApply(flowset,function(x)kurtosis(x[,channel]),use.exprs=TRUE))
 		fl_moments <- data.frame(fl_var,fl_skew,fl_kurt)
 		colnames(fl_moments) <- paste(channel,c("var","skew","kurt"),sep="")
 		fl <- cbind(fl,fl_moments)
@@ -430,9 +431,9 @@ flsummary <- function(flowset,channel="FL1.A",moments=F,split=F,transform=F) {
 
 # renaming function for flsummary data, keeping it separate for ease of use
 # probably slow due to for loop
-renameflcols <- function(x,channel="FL1.A",transform=F) {
+renameflcols <- function(x,channel="FL1.A",transform=FALSE) {
 	cols <- c("mean","median","sd")
-	if (transform!=F) {
+	if (transform!=FALSE) {
 		if (transform=="fscanorm") {
 			tname <- "FL1_FSC"
 		} else if (transform=="log") {
@@ -456,12 +457,12 @@ renameflcols <- function(x,channel="FL1.A",transform=F) {
 ### Returns a list of data frames, e.g. output$singlets, output$doublets, etc.
 summary.cyt <- function(
 		flowset,
-		transform=F,
+		transform=FALSE,
 		channel="FL1.A",
-		ploidy=F,
-		moments=F,
-		split=F,
-		only=F) {
+		ploidy=FALSE,
+		moments=FALSE,
+		split=FALSE,
+		only=FALSE) {
 
 	# Number of experiments
 	n_experiments <- length(flowset)
@@ -470,11 +471,11 @@ summary.cyt <- function(
 	if (channel=="FSC.A"&transform=="fscanorm") {
 		print("Channel FSC.A selected with no transform= setting set.")
 		print("Defaulting to no transform (set transform=\"log\" for log transform)")
-		transform=F
+		transform=FALSE
 	}
 
 	# Transform FL1.A
-	if (transform != F) {
+	if (transform != FALSE) {
 		print(paste("Transforming FL1.A using",
 			     transform,
 		    	"transform..."
@@ -517,7 +518,7 @@ summary.cyt <- function(
 		stop('Error: You must define ploidy="haploid" or ploidy="diploid"')
 	}
 
-	if (only==F) {
+	if (only==FALSE) {
 	    # Normalize and summarize each subset
 	    print("Summarizing all yeast events...")
 	    yeastsum <- flsummary(yeast,channel=channel,moments=moments,split=split,transform=transform)
@@ -624,7 +625,7 @@ flowFrame2Table <- function(flowframe) {
 # Also assumes that data frame is sorted by time on some level
 
 # For some reason this works even when the treatment column is full of NA values
-thalfall <- function(x,minval=F) {
+thalfall <- function(x,minval=FALSE) {
 	#HACK
 	strain_treatment <- paste(x$strain,x$treatment,sep=",,")
 	all_levels <- levels(as.factor(strain_treatment))
@@ -642,7 +643,7 @@ thalfall <- function(x,minval=F) {
 	        current_fit <- iaaregress(current_subset)
 		c <- current_fit$coefficients[[2]]
 
-		if (minval == F) {
+		if (minval == FALSE) {
 	                current_thalf <- predict.thalf(current_fit)
 	                minval_used <- max(c(min(current_fit$data$mean),c))
 		} else {
@@ -674,13 +675,13 @@ getthalf <- function(x,minval=0) {
 ### Makes plotting time series + fit + thalf a little easier
 ### Assumes that you have 'time' and 'mean' columns
 
-qplot.logistic <- function(timeseriesdata,minval=F) {
+qplot.logistic <- function(timeseriesdata,minval=FALSE) {
 
 	# Generate fit object
 	fitobject <- iaaregress(timeseriesdata)
 
 	# Calculate thalf
-	if (minval==F) {
+	if (minval==FALSE) {
 		thalf <- predict.thalf(fitobject)
 	} else {
 		thalf <- predict.thalf(fitobject,minval=minval)
@@ -905,7 +906,7 @@ qa.flowSet <- function(flowset_in) {
 #requires flowset and strain vector
 
 # on 2012-1-3, replaced 'split' FL1/FSC values by background-subtracted, changing the order of columns. All 'modelformat' data needs to be reprocessed.
-modelingFormat <- function(flowset,strain_vec,baseline="noYFP",normalize=F,ploidy="diploid") {
+modelingFormat <- function(flowset,strain_vec,baseline="noYFP",normalize=FALSE,ploidy="diploid") {
 	# Make sure strain vector includes correct baseline value
 	if ( sum(as.numeric(strain_vec==baseline)) == 0 ) {
 		stop("No baseline strain found in strain_vec (default is noYFP)")
@@ -913,11 +914,11 @@ modelingFormat <- function(flowset,strain_vec,baseline="noYFP",normalize=F,ploid
 
 	# Generate data frames from which to take data
     # Raw FL1.A table
-	raw <- summary.cyt(flowset,transform=F,only="singlets",split=T,ploidy=ploidy)
+	raw <- summary.cyt(flowset,transform=FALSE,only="singlets",split=TRUE,ploidy=ploidy)
     # Raw FSC.A table
 #	fsc <- summary.cyt(flowset,channel="FSC.A",only="singlets")
     # Normalized data table
-#	fl1_fsc <- summary.cyt(flowset,transform="fscanorm",only="singlets",split=T)
+#	fl1_fsc <- summary.cyt(flowset,transform="fscanorm",only="singlets",split=TRUE)
 
 	out <- raw
 
@@ -962,7 +963,7 @@ modelingFormat <- function(flowset,strain_vec,baseline="noYFP",normalize=F,ploid
 	out$FL1.A_bs_3 <- out$FL1.A-mean(subset(out,strain==baseline)$FL1.A_bs_3)
 	out$FL1.A_bs_4 <- out$FL1.A-mean(subset(out,strain==baseline)$FL1.A_bs_4)
 
-	if(normalize==T) {
+	if(normalize==TRUE) {
 		ddply(out,c("strain","treatment"),transform,norm1=FL1_FSC_norm/min(FL1_FSC_norm[1:3]))
 	}
 
@@ -1064,9 +1065,9 @@ density_frame <- function(frame,param="FL1.A") {
 # Script to reprocess cytometer data following a given pattern. Uses modelFormat for reprocessing.
 # Expects as input a directory with one folder 'csvs' full of prior csvs and the matching source data in 'source'
 # Outputs to same directory in 'newcsvs' folder, overwriting anything that exists there.
-reprocess <- function(directory_in,nick_type=T) {
+reprocess <- function(directory_in,nick_type=TRUE) {
     # Delete 'newcsvs' if it already exists
-    unlink(paste(directory_in,"/newcsvs",sep=""),recursive=T)
+    unlink(paste(directory_in,"/newcsvs",sep=""),recursive=TRUE)
 
     # Get csv list and create fresh 'newcsv' dir
 	csvlist <- list.files(paste(directory_in,"/csvs",sep=""))
@@ -1084,7 +1085,7 @@ reprocess <- function(directory_in,nick_type=T) {
         message("Reprocessing ",expname,"...")
 
         # Read in flowSet, trim to all that match csv
-        fs <- read.flowSet(path=paste(directory_in,"source/",dirs[dir],sep=""),alter.names=T)
+        fs <- read.flowSet(path=paste(directory_in,"source/",dirs[dir],sep=""),alter.names=TRUE)
 
         fs_exp <- sampleNames(fs)
         fs_matches <- which(fs_exp %in% csv_files)
@@ -1114,8 +1115,8 @@ flowFrame.gettime <- function(flowframe) {
     return(time)
 }
 
-YeastCytSummary <- function(inpath,ploidy=F,only="singlets",channel="FL1.A") {
-    fs <- read.flowSet(path=inpath,alter.names=T)
+YeastCytSummary <- function(inpath,ploidy=FALSE,only="singlets",channel="FL1.A") {
+    fs <- read.flowSet(path=inpath,alter.names=TRUE)
     if (ploidy=="diploid"|ploidy=="haploid") {
         fs_sum <- summary.cyt(fs,only=only,ploidy=ploidy,channel=channel)
     } else {
