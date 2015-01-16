@@ -206,6 +206,9 @@ library(flowViz)
                        1,1,6e3,6e3),     # y points
 	    ncol=2,nrow=4,dimnames=list(c("1","1","1","1"),c("FSC.H","SSC.H"))))
 
+    pseudomonasGate <<- polygonGate(filterID="P. aeruginosa", .gate=matrix(c(c(1e3, 2e4, 2e4, 1e3), c(5e2, 5e2, 1e4, 1e4)), ncol=2, nrow=4, dimnames=list(c("p1", "p2", "p3", "p4"),c("FSC.H", "SSC.H"))))
+
+
 
 ###########################
 ###  Cytometer Scripts  ###
@@ -349,50 +352,32 @@ fl1transform <- function(x,transform=FALSE) {
 ### Get summary statistics for fluorescence, other data
 
 flsummary <- function(flowset, channel="FL1.A", moments=FALSE, split=FALSE,
-                      transform=FALSE) {
+                      transform=FALSE, mode="accuri") {
 	# Number of cells (experiments) in the flowSet
 	n_experiment <- length(flowset)
 
 	# Initialize empty matrices/data frames to increase efficiency
 	warnings <- c()
 
-	if (moments == TRUE) {
-		library(moments)
-	}
-
-	# Get time of each frame in minutes of the day
-	btime_raw <- fsApply(flowset,function(x)as.numeric(unlist(strsplit(keyword(x)$`$BTIM`,split=":"))))
-	btime <-  apply(btime_raw,1,function(x)x[1]*60+x[2]+x[3]/60+x[4]/6000)
-	time <- btime-min(btime)
-
-	# Acquisition time - how long it took to take the sample, in seconds
-	atime <- fsApply(flowset,function(x)as.numeric(keyword(x)$`#ACQUISITIONTIMEMILLI`)/1000)
-
 	events <- fsApply(flowset,function(x)length(x[,1]),use.exprs=TRUE)
-	uL <- fsApply(flowset,function(x)as.integer(keyword(x)$`$VOL`)/1000)
-	conc <- events/uL
-
+    # Check for too few events
 	for (i in 1:n_experiment) {
 		if (events[i] < 100) {
 			warnings <- c(warnings,i)
 		}
+    }
+	if (length(warnings) != 0) {
+		warnings <- paste(warnings,collapse=", ")
+		print(paste("Warning: frame(s)",warnings,"had less than 100 events in this gate."))
 	}
 
+    # Fluorescent channel data (e.g. FL1-A)
 	fl_mean <- fsApply(flowset,function(x)mean(x[,channel]),use.exprs=TRUE)
 	fl_median <- fsApply(flowset,function(x)median(x[,channel]),use.exprs=TRUE)
 	fl_sd <- fsApply(flowset,function(x)sd(x[,channel]),use.exprs=TRUE)
 	fl <- data.frame(fl_mean,fl_median,fl_sd)
 	colnames(fl) <- paste(channel,c("mean","median","sd"),sep="")
-
-	# Do we want mean fl values for data split into 4 evenly sized chunks?
-	if (split==TRUE) {
-		split_table <- fsApply(flowset,splitFrame)
-		split_table <- data.frame(matrix(unlist(split_table),ncol=4,byrow=TRUE))
-		colnames(split_table) <- paste("split",1:4,sep="")
-		fl <- cbind(fl,split_table)
-	}
-
-	# Do we want the first few moments?
+    # Do we want the first few moments?
 	if (moments == TRUE) {
 		require(moments)
 		fl_var <- data.frame(fsApply(flowset,function(x)var(x[,channel]),use.exprs=TRUE))
@@ -403,13 +388,40 @@ flsummary <- function(flowset, channel="FL1.A", moments=FALSE, split=FALSE,
 		fl <- cbind(fl,fl_moments)
 	}
 
-	file <- fsApply(flowset,function(x)strsplit(keyword(x)$GUID,".fcs")[[1]])
-	colnames(file) <- "file"
+    # Different cytometer settings - unique to Klavins/Seelig labs (we use Accuri C6 and MacsQuant VYB)
+    if (mode == "accuri") {
+    	# Get time of each frame in minutes of the day
+    	btime_raw <- fsApply(flowset,function(x)as.numeric(unlist(strsplit(keyword(x)$`$BTIM`,split=":"))))
+   	    btime <-  apply(btime_raw,1,function(x)x[1]*60+x[2]+x[3]/60+x[4]/6000)
 
-	if (length(warnings) != 0) {
-		warnings <- paste(warnings,collapse=", ")
-		print(paste("Warning: frame(s)",warnings,"had less than 100 events in this gate."))
-	}
+    	# Acquisition time - how long it took to take the sample, in seconds
+    	atime <- fsApply(flowset,function(x)as.numeric(keyword(x)$`#ACQUISITIONTIMEMILLI`)/1000)
+
+        # Volume in uL
+	    vol <- fsApply(flowset,function(x)as.integer(keyword(x)$`$VOL`)/1000)
+
+	    conc <- events/vol
+	    file <- fsApply(flowset,function(x)strsplit(keyword(x)$GUID,".fcs")[[1]])
+    } else if (mode == "macsquant") {
+     	# Get time of each frame in minutes of the day
+    	btime_raw <- fsApply(flowset,function(x)as.numeric(unlist(strsplit(keyword(x)["$BTIM"][[1]],split=":"))))
+   	    btime <-  apply(btime_raw,1,function(x)x[1]*60+x[2]+x[3]/60)
+
+        # FIXME: This may not really be the acquisition time, but not sure how else to get it right now.
+        # (maximum value of HDR.T channel - time of last-acquired event)
+        atime <- fsApply(flowset, function(x)data.frame(summary(x))$HDR.T[6])
+
+        # FIXME: There is no VOL keyword in FCS 3.0 from MacQuant, but there is for 3.1 - but flowcore can't read MacsQuant FCS 3.1, grr.
+        conc <- NA
+
+	    file <- fsApply(flowset,function(x)strsplit(keyword(x)$`$FIL`,".fcs")[[1]])
+    }
+
+   	time <- btime-min(btime)
+
+
+    # Column name adjustments
+	colnames(file) <- "file"
 
 	# Insert empty strain and colony columns
 	strain=matrix(nrow=n_experiment)
@@ -755,8 +767,8 @@ iaaregress <- function(table,param=4) {
 	if(param==4) {
 	    # 4-parameter model
 	    # f(x) = c + \frac{d-c}{(1+\exp(b(x - e)))}
-	    regress0 <- drm(data=table, mean~time, fct = LL.4()) #log model
-#	    regress0 <- drm(data=table, mean~time, fct = L.4()) # non log model
+#	    regress0 <- drm(data=table, mean~time, fct = L.4()) #log model
+	    regress0 <- drm(data=table, mean~time, fct = L.4()) # non log model
 #  		regress0 <- drm(data=table, mean~time, fct = L.4(fixed=c(NA,min(table[,"mean"]),max(table[,"mean"]),NA)))
     } else {
 		if(param==3) {
