@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Used in Havens et al. 2012 (doi: 10.1104/pp.112.202184) -->
+<gating:Gating-ML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:gating="http://www.isac-net.org/std/Gating-ML/v2.0/gating" xmlns:transforms="http://www.isac-net.org/std/Gating-ML/v2.0/transformations" xmlns:data-type="http://www.isac-net.org/std/Gating-ML/v2.0/datatypes" xsi:schemaLocation="http://www.isac-net.org/std/Gating-ML/v2.0/gating http://flowcyt.sourceforge.net/gating/2.0/xsd/Gating-ML.v2.0.xsd http://www.isac-net.org/std/Gating-ML/v2.0/transformations http://flowcyt.sourceforge.net/gating/2.0/xsd/Transformations.v2.0.xsd http://www.isac-net.org/std/Gating-ML/v2.0/datatypes http://flowcyt.sourceforge.net/gating/2.0/xsd/DataTypes.v2.0.xsd">
+  <gating:PolygonGate gating:id="mCherryAndYFPGate">
+    <gating:dimension gating:compensation-ref="uncompensated">
+      <data-type:fcs-dimension data-type:name="FL1.A"/>
+    </gating:dimension>
+    <gating:dimension gating:compensation-ref="uncompensated">
+      <data-type:fcs-dimension data-type:name="FL3.A"/>
+    </gating:dimension>
+    <gating:vertex>
+      <gating:coordinate data-type:value="500"/>
+      <gating:coordinate data-type:value="2000"/>
+    </gating:vertex>
+    <gating:vertex>
+      <gating:coordinate data-type:value="2000"/>
+      <gating:coordinate data-type:value="2000"/>
+    </gating:vertex>
+    <gating:vertex>
+      <gating:coordinate data-type:value="40000"/>
+      <gating:coordinate data-type:value="18000"/>
+    </gating:vertex>
+    <gating:vertex>
+      <gating:coordinate data-type:value="70000"/>
+      <gating:coordinate data-type:value="90000"/>
+    </gating:vertex>
+    <gating:vertex>
+      <gating:coordinate data-type:value="8000"/>
+      <gating:coordinate data-type:value="80000"/>
+    </gating:vertex>
+    <gating:vertex>
+      <gating:coordinate data-type:value="500"/>
+      <gating:coordinate data-type:value="4000"/>
+    </gating:vertex>
+  </gating:PolygonGate>
+</gating:Gating-ML>

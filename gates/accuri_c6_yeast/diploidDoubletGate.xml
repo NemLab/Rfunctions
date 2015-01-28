@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Used in Havens et al. 2012 (doi: 10.1104/pp.112.202184) -->
+<gating:Gating-ML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:gating="http://www.isac-net.org/std/Gating-ML/v2.0/gating" xmlns:transforms="http://www.isac-net.org/std/Gating-ML/v2.0/transformations" xmlns:data-type="http://www.isac-net.org/std/Gating-ML/v2.0/datatypes" xsi:schemaLocation="http://www.isac-net.org/std/Gating-ML/v2.0/gating http://flowcyt.sourceforge.net/gating/2.0/xsd/Gating-ML.v2.0.xsd http://www.isac-net.org/std/Gating-ML/v2.0/transformations http://flowcyt.sourceforge.net/gating/2.0/xsd/Transformations.v2.0.xsd http://www.isac-net.org/std/Gating-ML/v2.0/datatypes http://flowcyt.sourceforge.net/gating/2.0/xsd/DataTypes.v2.0.xsd">
+  <gating:PolygonGate gating:id="diploidDoubletGate">
+    <gating:dimension gating:compensation-ref="uncompensated">
+      <data-type:fcs-dimension data-type:name="FSC.A"/>
+    </gating:dimension>
+    <gating:dimension gating:compensation-ref="uncompensated">
+      <data-type:fcs-dimension data-type:name="FSC.H"/>
+    </gating:dimension>
+    <gating:vertex>
+      <gating:coordinate data-type:value="1000000"/>
+      <gating:coordinate data-type:value="800000"/>
+    </gating:vertex>
+    <gating:vertex>
+      <gating:coordinate data-type:value="1700000"/>
+      <gating:coordinate data-type:value="1250000"/>
+    </gating:vertex>
+    <gating:vertex>
+      <gating:coordinate data-type:value="2300000"/>
+      <gating:coordinate data-type:value="1700000"/>
+    </gating:vertex>
+    <gating:vertex>
+      <gating:coordinate data-type:value="2200000"/>
+      <gating:coordinate data-type:value="2000000"/>
+    </gating:vertex>
+    <gating:vertex>
+      <gating:coordinate data-type:value="2000000"/>
+      <gating:coordinate data-type:value="2200000"/>
+    </gating:vertex>
+    <gating:vertex>
+      <gating:coordinate data-type:value="800000"/>
+      <gating:coordinate data-type:value="850000"/>
+    </gating:vertex>
+  </gating:PolygonGate>
+</gating:Gating-ML>

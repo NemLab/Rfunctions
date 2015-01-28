@@ -1,14 +1,5 @@
-
-### Usage notes for these scripts:
+# Installation note:
 # Almost every function or object depends on the flowCore (and often flowViz) package(s) from biocondcutor.
-# To install these, run these commands in R:
-# 	source("http://bioconductor.org/biocLite.R")
-# 	biocLite("flowCore")
-# 	biocLite("flowViz")
-#
-# The most useful script for an R newbie is 'summary.cyt'.
-# It will take a flowSet (see flowCore documentation) and run some QA, gate, and get summary FL1.A (or other channel) data
-# as well as experiment information like the time of day and events/µL concentration.
 
 library(flowViz)
 
@@ -16,217 +7,71 @@ library(flowViz)
 ###  Cytometer Gates  ###
 #########################
 
-##################################
-### Notes on cytometer changes ###
-##################################
+# These gates were defined for yeast experiments on an Accuri C6 CSampler.
+# The typical strain used was W303-1A ADE2, W303-1B, and W303 (diploid).
+# They were designed specifically for use in the Havens et al. 2012
+# (doi: 10.1104/pp.112.202184) publication, but have been used in other
+# Klavins lab, Nemhauser lab, and Seelig lab publications.
 
-### Got new cytometer around 2011-02-22-ish (updated gates)
-### Switched FL1-A and FL2-A sometime around 02-23.  Was switched back relatively soon afterwards.
-### FSC-A was tweaked around 2011-03-8 (early-ish March), changed gates.
+library(flowUtils)
 
-### yeastGate
-### Defines an SSC.A vs FSC.A gate.  Includes only the yeast population
-### from a flowSet
+SCRIPT_PATH <- dirname(print(parent.frame(2)$ofile))
+YEAST_GATE_PATH <- file.path(SCRIPT_PATH, "gates", "accuri_c6_yeast")
+flowEnv <- new.env()
 
-	# As of 2011-10-26, it may be necessary to create a new yeastGate for diploids that truly cuts out dead cells.
+# Gates for yeast cells (excludes debris / bacteria) for both haploid and
+# diploid W303 yeast
+# These diploid gates were used in Havens et al. 2012
+# (doi: 10.1104/pp.112.202184)
+read.gatingML(file.path(YEAST_GATE_PATH, "yeastGate.xml"), flowEnv)
+yeastGate <- flowEnv[["yeastGate"]]
 
-	# Used from 2011-02-22 to present, excludes debris/non-yeast
-	yeastGate <<- polygonGate(filterId="Yeast",
-	    .gate=matrix(c(400000,10000000,10000000,400000, 10000,10000,2300000,60000),
-	    ncol=2,nrow=4,dimnames=list(c("1","1","1","1"),c("FSC.A","SSC.A"))))
+# Gates for singlets (single cells) of diploid W303 yeast
+read.gatingML(file.path(YEAST_GATE_PATH, "diploidSingletGate.xml"), flowEnv)
+diploidSingletGate <- flowEnv[["diploidSingletGate"]]
 
-	# Used until cytometer was switched around 2011-02-22
-	oldyeastGate <<- polygonGate(filterId="Yeast",
-		.gate=matrix(c(160000,1500000,1500000,160000, 0,0,200000,200000),
-	    ncol=2,nrow=4,dimnames=list(c("1","1","1","1"),c("FSC.A","SSC.A"))))
+# Gates for doublets (cells stuck together) of diploid W303 yeast
+read.gatingML(file.path(YEAST_GATE_PATH, "diploidDoubletGate.xml"), flowEnv)
+diploidDoubletGate <- flowEnv[["diploidDoubletGate"]]
 
+# Gates for doublets (cells stuck together) of haploid W303-1A ADE2 yeast
+read.gatingML(file.path(YEAST_GATE_PATH, "haploidDoubletGate.xml"), flowEnv)
+haploidDoubletGate <- flowEnv[["haploidDoubletGate"]]
 
-	# Diploid Singlet gate, used 2011-07-09 to present
-	# Diploids are slightly larger and have better separation between singlets/doublets
-	dipsingletGate <<- polygonGate(filterId="DipSingletGate",
-		.gate=matrix(c(
-			#x values
-			7.5e5,13e5,18e5,15e5,6e5,
-			#y values
-			9e5,16e5,26e5,30e5,15e5),
-			ncol=2,nrow=5,dimnames=list(rep(NA,5),c("FSC.A","FSC.H"))
-			      )
-			     )
+# Gates for singlets (single cells) of haploid W303-1A ADE2 yeast
+read.gatingML(file.path(YEAST_GATE_PATH, "haploidSingletGate.xml"), flowEnv)
+haploidSingletGate <- flowEnv[["haploidSingletGate"]]
 
-	# Diploid Doublet gate, used 2011-08-09 to present
-	# Diploids are slightly larger and have better separation between singlets/doublets
-	dipdoubletGate <<- polygonGate(filterId="DipDoubletGate",
-		.gate=matrix(c(
-			#x values
-			10e5,17e5,23e5,22e5,20e5,8e5,
-			#y values
-			8e5,12.5e5,17e5,20e5,22e5,8.5e5),
-			ncol=2,nrow=6,dimnames=list(rep(NA,6),c("FSC.A","FSC.H"))
-			      )
-			     )
+# The following two gates are for a coculture experiment with two cell types.
+# The first has mCherry and YFP, with the expectation that YFP decreases
+# over the course of the experiment. The second have only YFP, that also
+# decreases.
 
+# Gates for diploid cells expressing mCherry (FL3) and YFP (FL1), allowing
+# for drops in YFP signal (designed for YFP degradation experiments)
+read.gatingML(file.path(YEAST_GATE_PATH, "mCherryAndYFPGate.xml"), flowEnv)
+mCherryAndYFPGate <- flowEnv[["mCherryAndYFPGate"]]
 
-	# Diploid Doublet gate, used 2011-08-09 to present
-	# Diploids are slightly larger and have better separation between singlets/doublets
-	hapdoubletGate <<- polygonGate(filterId="HaploidDoubletGate",
-		.gate=matrix(c(
-			#x values
-			6.5e5,1.15e6,1.5e6,1.4e6,1.2e6,5e5,
-			#y values
-			5.75e5,9e5,1.3e6,1.4e6,1.5e6,6.5e5),
-			ncol=2,nrow=6,dimnames=list(rep(NA,6),c("FSC.A","FSC.H"))
-			      )
-			     )
+# Gates for diploid cells expressing YFP (FL1) but not mCherry (FL3)
+# Complementary to mCherryAndYFPGate
+read.gatingML(file.path(YEAST_GATE_PATH, "YFPNomCherryGate.xml"), flowEnv)
+YFPNomCherryGate <- flowEnv[["YFPNomCherryGate"]]
 
-	# Used 2012-02-22 to present
-	hapsingletGate <<- polygonGate(filterId="HaploidSingletGate",
-		.gate=matrix(c(
-			#x values
-			5e5,0.8e6,1.15e6,1e6,5e5,
-			#y values
-			8e5,1.05e6,1.5e6,1.8e6,1e6),
-			ncol=2,nrow=5,dimnames=list(rep(NA,5),c("FSC.A","FSC.H"))
-			      )
-			     )
+# Gate for E. coli - very close to debris, must keep cytometer clean
+# and up-to-date on tubing and filters
+read.gatingML(file.path(YEAST_GATE_PATH, "eColiGate.xml"), flowEnv)
+eColiGate <- flowEnv[["eColiGate"]]
 
-    ####################
-    # Havens et al 2012#
-    ####################
-	# Used in auxin paper (Havens 2012) to gate all yeast from non-yeast. Also excludes a portion
-	# of small-FSC.A, high-SSC.A cells (presumably dead).
-	auxinpaper_yeastGate <<- polygonGate(filterId="Yeast",
-	    .gate=matrix(c(400000,10000000,10000000,400000, 10000,10000,2300000,60000),
-	    ncol=2,nrow=4,dimnames=list(c("1","1","1","1"),c("FSC.A","SSC.A"))))
-	# Used in auxin paper to gate for singlets after gating with auxinpaper_yeastGate
-	auxinpaper_singletGate <<- polygonGate(filterId="DipSingletGate",
-		.gate=matrix(c(
-			#x values
-			7.5e5,13e5,18e5,15e5,6e5,
-			#y values
-			9e5,16e5,26e5,30e5,15e5),
-			ncol=2,nrow=5,dimnames=list(rep(NA,5),c("FSC.A","FSC.H"))
-			      )
-			     )
-	# Used in auxin paper to gate for doublets after gating with auxinpaper_yeastGate
-	auxinpaper_doubletGate <<- polygonGate(filterId="DipDoubletGate",
-		.gate=matrix(c(
-			#x values
-			10e5,17e5,23e5,22e5,20e5,8e5,
-			#y values
-			8e5,12.5e5,17e5,20e5,22e5,8.5e5),
-			ncol=2,nrow=6,dimnames=list(rep(NA,6),c("FSC.A","FSC.H"))
-			      )
-			     )
-
-	# haploid singlet gate, used from 2011-02-22 to 2012-02-22
-	singletGate2 <<- polygonGate(filterId="Singlets",
-		.gate=matrix(c(400000,3000000,3000000,160000, 620000,3500000,6000000,500000),
-		ncol=2,nrow=4,dimnames=list(c("1","1","1","1"),c("FSC.A","FSC.H"))))
-
-
-
-	# Used until cytometer was switched around 2011-02-22
-	oldsingletGate <<- polygonGate(filterId="Singlets",
-	    .gate=matrix(c(160000,1500000,1400000,160000, 680000,5700000,6000000,750000),
-	    ncol=2,nrow=4,dimnames=list(c("1","1","1","1"),c("FSC.A","FSC.H"))))
-
-
-	# Used up to 2011-02-10
-	extraoldsingletGate <<- polygonGate(filterId="Singlets",
-	    .gate=matrix(c(160000,800000,800000,160000, 680000,3150000,3500000,750000),
-	    ncol=2,nrow=4,dimnames=list(c("1","1","1","1"),c("FSC.A","FSC.H"))))
-
-## experimental gates
-
-    # mChGate - designed around data from cytometer experiment Nick did on 2012-9-19 (NB036)
-    # subsets cells with high FL3.A (mCherry) vs FL1.A (EYFP) output.
-    # Note that it was designed around cells that have both EYFP and mCherry and
-    # may not work for mCherry-only cells
-    mChGate <<- polygonGate(filterId='mCherryGate',
-                            matrix(c(5e2,2e3,4e4,7e4,8e3,5e2, 2e3,2e3,1.8e4,9e4,8e4,4e3),
-                                ncol=2,
-                                nrow=6,
-                                dimname=list(c(1,1,1,1,1,1),c("FL1.A","FL3.A")))
-                            )
-
-    # Same motivatio as the mChGate - separate EYFP+mCh cells from EYFP cells. In this case,
-    # subsets for EYFP-only cells. Again, may only work for this particular experiment type
-    EYFPGate <<- polygonGate(filterId='EYFPGate',
-                             matrix(c(0,4e3,3e4,3e4,3e3,0, 0,0,4e3,9e3,2e3,2e3),
-                                ncol=2,
-                                nrow=6,
-                                dimname=list(c(1,1,1,1,1,1),c("FL1.A","FL3.A"))
-                                )
-                            )
-
-	# Diploid Singlet gate, first created 2011-07-09
-	# Diploids are slightly larger and have better separation between singlets/doublets
-	dipsingletGate3 <<- polygonGate(filterId="DipSingletGate2",
-		.gate=matrix(c(
-			#x values
-			5e5,13e5,18e5,15e5,6e5,
-			#y values
-			7e5,16e5,26e5,30e5,15e5),
-			ncol=2,nrow=5,dimnames=list(rep(NA,5),c("FSC.A","FSC.H"))
-			      )
-			     )
-
-	# for diploids, highlights dead cells
-	deadGate <<- polygonGate(filterId="deadGate",
-		.gate=matrix(c(7.5e5,13e5,3e6,15e5,6e5,
-				1e5,2e5,7.5e5,4e5,2e5),
-				ncol=2,nrow=5,dimnames=list(rep(NA,5),c("FSC.A","SSC.A")))
-			)
-
-	# for diploids, takes small-sized cells, maybe could use for excluding dead cells when combined with clustering
-	deadexcludeGate <<- polygonGate(filterId="deadGate",
-                .gate=matrix(c(7.5e5,4e6,3e6,1.5e6,6e5,
-				0,0,7.5e5,8e5,2e5),
-                                ncol=2,nrow=5,dimnames=list(rep(NA,5),c("FSC.A","SSC.A")))
-                        )
-
-	# for diploids, is a little more generous than 'dipsingletGate' Combine with flowClust to clean it up
-	dipsingletGate2 <<- polygonGate(filterId="DipSingletGate",
-		.gate=matrix(c(
-			7.5e5,14e5,30e5,15e5,6e5,
-			9e5,16e5,35e5,40e5,15e5),
-			ncol=2,nrow=5,dimnames=list(rep(NA,5),c("FSC.A","FSC.H"))))
-
-	# excludes the big-cell subpopulation, it might be sick/weird/less comparable
-	# use !excludeBig to exclude them.
-	excludeBig <<- polygonGate(filterId="excludeBig",
-		.gate=matrix(c(
-                        3e6,2e7,2e7,2e7,3e6,
-                        1e6,16e5,5e6,1e7,1e7),
-                        ncol=2,nrow=5,dimnames=list(rep(NA,5),c("FSC.A","FSC.H"))))
-
-    # Rob's gate for E. coli
-	ecoliGate <<- polygonGate(filterId="E.coli",
-	    .gate=matrix(c(2e4,8e4,8e4,2e4,  # x points
-                       1,1,6e3,6e3),     # y points
-	    ncol=2,nrow=4,dimnames=list(c("1","1","1","1"),c("FSC.H","SSC.H"))))
-
-    pseudomonasGate <<- polygonGate(filterID="P. aeruginosa", .gate=matrix(c(c(1e3, 2e4, 2e4, 1e3), c(5e2, 5e2, 1e4, 1e4)), ncol=2, nrow=4, dimnames=list(c("p1", "p2", "p3", "p4"),c("FSC.H", "SSC.H"))))
+# Gate for P. aeruginosa - very close to debris, must keep cytometer clean
+# and up-to-date on tubing and filters
+read.gatingML(file.path(YEAST_GATE_PATH, "pAeruginosaGate.xml"), flowEnv)
+pAeruginosaGate <- flowEnv[["pAeruginosaGate"]]
 
 
 
 ###########################
 ###  Cytometer Scripts  ###
 ###########################
-
-### polygate:
-### Make a gate easier?
-
-polygate <- function(x,y,filterID="newGate",channels=c("FSC.A","FSC.H")) {
-    if( length(x) != length(y) | !is.numeric(x) | !is.numeric(y)) {
-        stop("x coordinate vector must be same length as y coordinate vector")
-    }
-
-    gate <- polygonGate(filterId=filterID,
-                        .gate=matrix(c(x,y),
-                        ncol=2,nrow=length(x),dimnames=list(rep(NA,5),channels)))
-    return(gate)
-}
 
 ### ploidy:
 ### Tries to guess the ploidy of a given flowframe
@@ -248,40 +93,6 @@ ploidy <- function(flowframe) {
 		return(c("Haploid",quotient))
 	}
 }
-
-### qa.gating:
-### Very simple script to check whether a flowSet or flowFrame
-### contains empty values, in which case normalization may fail (divide by zero)
-
-qa.gating <- function(x,threshold=100) {
-	# Defaults to event count threshold of 100
-
-	print("Running QA...")
-	x.class <- class(x)[1]
-	if(x.class=="flowFrame") {
-		counts <- length(exprs(x[,1]))
-	} else if(x.class=="flowSet") {
-		counts <- fsApply(x,length,use.exprs=TRUE)
-	} else {
-		print("Input must be a flowSet or flowFrame")
-	}
-
-	# Find all counts less than 100 (now it's a boolean vector)
-	counts.boolean <- counts<threshold
-	counts.failed.position <- grep(TRUE,counts.boolean) #positions of those that failed
-
-	# Did we get any failed counts?
-	# If so, return the position
-	counts.failed <- length(counts.failed.position)!=0
-	if(counts.failed) {
-		print("QA resulted in 1 or more warnings.")
-		return(counts.failed.position)
-	} else{
-		print("QA succeeded")
-		return(FALSE)
-	}
-}
-
 
 ### fl1transform:
 ### Normalizes FL1.A values in a flowset/flowframe to FSC.A values
@@ -524,8 +335,8 @@ summary.cyt <- function(
 		doublets <- Subset(yeast_nonempty,hapdoubletGate)
 	} else if (ploidy=="diploid") {
 		print("Gating with diploid gates...")
-		singlets <- Subset(yeast_nonempty,dipsingletGate)
-		doublets <- Subset(yeast_nonempty,dipdoubletGate)
+		singlets <- Subset(yeast_nonempty,diploidSingletGate)
+		doublets <- Subset(yeast_nonempty,diploidDoubletGate)
 	} else {
 		stop('Error: You must define ploidy="haploid" or ploidy="diploid"')
 	}

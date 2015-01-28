@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Used in Havens et al. 2012 (doi: 10.1104/pp.112.202184) -->
+<gating:Gating-ML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:gating="http://www.isac-net.org/std/Gating-ML/v2.0/gating" xmlns:transforms="http://www.isac-net.org/std/Gating-ML/v2.0/transformations" xmlns:data-type="http://www.isac-net.org/std/Gating-ML/v2.0/datatypes" xsi:schemaLocation="http://www.isac-net.org/std/Gating-ML/v2.0/gating http://flowcyt.sourceforge.net/gating/2.0/xsd/Gating-ML.v2.0.xsd http://www.isac-net.org/std/Gating-ML/v2.0/transformations http://flowcyt.sourceforge.net/gating/2.0/xsd/Transformations.v2.0.xsd http://www.isac-net.org/std/Gating-ML/v2.0/datatypes http://flowcyt.sourceforge.net/gating/2.0/xsd/DataTypes.v2.0.xsd">
+  <gating:RectangleGate gating:id="eColiGate">
+    <gating:dimension gating:min="20000" gating:max="80000"
+                      gating:compensation-ref="uncompensated">
+      <data-type:fcs-dimension data-type:name="FSC.H"/>
+    </gating:dimension>
+    <gating:dimension gating:min="1" gating:max="6000"
+                      gating:compensation-ref="uncompensated">
+      <data-type:fcs-dimension data-type:name="SSC.H"/>
+    </gating:dimension>
+  </gating:RectangleGate>
+</gating:Gating-ML>
