@@ -15,32 +15,45 @@ library(flowViz)
 
 library(flowUtils)
 
+# TODO: Group the gates into xml files with more than one gate (e.g. one for
+# the 2012 paper, one for yeast)
 SCRIPT_PATH <- dirname(print(parent.frame(2)$ofile))
 YEAST_GATE_PATH <- file.path(SCRIPT_PATH, "gates", "accuri_c6_yeast")
 flowEnv <- new.env()
+
+# Workaround for gating-ML gates read into flowUtils 1.22 lacking column
+# names in their boundaries data frame. Not having names results in an
+# incompatibility with flowViz plots using the filter parameter.
+# Not sure if later releases have this problem).
+add_dimnames <- function(polygate) {
+    dim1 <- attributes(attributes(polygate)$parameters[[1]])$parameters
+    dim2 <- attributes(attributes(polygate)$parameters[[2]])$parameters
+    colnames(attributes(polygate)$boundaries) <- c(dim1, dim2)
+    return(polygate)
+}
 
 # Gates for yeast cells (excludes debris / bacteria) for both haploid and
 # diploid W303 yeast
 # These diploid gates were used in Havens et al. 2012
 # (doi: 10.1104/pp.112.202184)
 read.gatingML(file.path(YEAST_GATE_PATH, "yeastGate.xml"), flowEnv)
-yeastGate <- flowEnv[["yeastGate"]]
+yeastGate <- add_dimnames(flowEnv[["yeastGate"]])
 
 # Gates for singlets (single cells) of diploid W303 yeast
 read.gatingML(file.path(YEAST_GATE_PATH, "diploidSingletGate.xml"), flowEnv)
-diploidSingletGate <- flowEnv[["diploidSingletGate"]]
+diploidSingletGate <- add_dimnames(flowEnv[["diploidSingletGate"]])
 
 # Gates for doublets (cells stuck together) of diploid W303 yeast
 read.gatingML(file.path(YEAST_GATE_PATH, "diploidDoubletGate.xml"), flowEnv)
-diploidDoubletGate <- flowEnv[["diploidDoubletGate"]]
+diploidDoubletGate <- add_dimnames(flowEnv[["diploidDoubletGate"]])
 
 # Gates for doublets (cells stuck together) of haploid W303-1A ADE2 yeast
 read.gatingML(file.path(YEAST_GATE_PATH, "haploidDoubletGate.xml"), flowEnv)
-haploidDoubletGate <- flowEnv[["haploidDoubletGate"]]
+haploidDoubletGate <- add_dimnames(flowEnv[["haploidDoubletGate"]])
 
 # Gates for singlets (single cells) of haploid W303-1A ADE2 yeast
 read.gatingML(file.path(YEAST_GATE_PATH, "haploidSingletGate.xml"), flowEnv)
-haploidSingletGate <- flowEnv[["haploidSingletGate"]]
+haploidSingletGate <- add_dimnames(flowEnv[["haploidSingletGate"]])
 
 # The following two gates are for a coculture experiment with two cell types.
 # The first has mCherry and YFP, with the expectation that YFP decreases
@@ -50,12 +63,12 @@ haploidSingletGate <- flowEnv[["haploidSingletGate"]]
 # Gates for diploid cells expressing mCherry (FL3) and YFP (FL1), allowing
 # for drops in YFP signal (designed for YFP degradation experiments)
 read.gatingML(file.path(YEAST_GATE_PATH, "mCherryAndYFPGate.xml"), flowEnv)
-mCherryAndYFPGate <- flowEnv[["mCherryAndYFPGate"]]
+mCherryAndYFPGate <- add_dimnames(flowEnv[["mCherryAndYFPGate"]])
 
 # Gates for diploid cells expressing YFP (FL1) but not mCherry (FL3)
 # Complementary to mCherryAndYFPGate
 read.gatingML(file.path(YEAST_GATE_PATH, "YFPNomCherryGate.xml"), flowEnv)
-YFPNomCherryGate <- flowEnv[["YFPNomCherryGate"]]
+YFPNomCherryGate <- add_dimnames(flowEnv[["YFPNomCherryGate"]])
 
 # Gate for E. coli - very close to debris, must keep cytometer clean
 # and up-to-date on tubing and filters
@@ -331,8 +344,8 @@ summary.cyt <- function(
     }
 	if (ploidy=="haploid") {
 		print("Gating with haploid gates...")
-		singlets <- Subset(yeast_nonempty,hapsingletGate)
-		doublets <- Subset(yeast_nonempty,hapdoubletGate)
+		singlets <- Subset(yeast_nonempty,haploidSingletGate)
+		doublets <- Subset(yeast_nonempty,haploidDoubletGate)
 	} else if (ploidy=="diploid") {
 		print("Gating with diploid gates...")
 		singlets <- Subset(yeast_nonempty,diploidSingletGate)
