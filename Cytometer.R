@@ -245,7 +245,7 @@ flsummary <- function(flowset, channel="FL1.A", moments=FALSE, split=FALSE,
 
 
     # Column name adjustments
-	colnames(file) <- "file"
+	# colnames(file) <- "file"
 
 	# Insert empty strain and colony columns
 	strain=matrix(nrow=n_experiment)
@@ -256,6 +256,8 @@ flsummary <- function(flowset, channel="FL1.A", moments=FALSE, split=FALSE,
 
 	# Make rows filename keys
 	rownames(flsummary) <- file
+
+    names(flsummary$file) <- NULL
 
 	# Rename the 'mean', 'median', and 'sd' columns to reflect transformations done or channel used.
 	# 'FL1.A' = no transformation, 'FL1_FSC' = "fsacanorm", 'log' = "log"
@@ -332,16 +334,17 @@ summary.cyt <- function(
             empties <- c(empties, i)
         }
     }
-    nonempties <- 1:length(yeast)
-    yeast_nonempty <- yeast[seq(along=yeast)]
-    if (length(empties) != 0) {
-        print(paste("The following indices had no events in the yeast gate and have been excluded from singlets/doublets:",
-              paste(empties, collapse=", ")))
-        for (i in empties) {
-            nonempties <- nonempties[which(nonempties != i)]
-        }
-        yeast_nonempty <- yeast_nonempty[nonempties]
-    }
+#    nonempties <- 1:length(yeast)
+#    yeast_nonempty <- yeast[seq(along=yeast)]
+#    if (length(empties) != 0) {
+#        print(paste("The following indices had no events in the yeast gate and have been excluded from singlets/doublets:",
+#              paste(empties, collapse=", ")))
+#        for (i in empties) {
+#            nonempties <- nonempties[which(nonempties != i)]
+#        }
+#        yeast_nonempty <- yeast_nonempty[nonempties]
+#    }
+    yeast_nonempty <- yeast
 	if (ploidy=="haploid") {
 		print("Gating with haploid gates...")
 		singlets <- Subset(yeast_nonempty,haploidSingletGate)

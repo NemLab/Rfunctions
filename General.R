@@ -177,12 +177,13 @@ pushViewport(viewport(layout=grid.layout(nrow,ncol) ) )
 ### in log model, x and e are replaced by log(x) and log(e)
 
 iaaregress <- function(table,param=4) {
+    library(drc)
 
 	if(param==4) {
 	    # 4-parameter model
 	    # f(x) = c + \frac{d-c}{(1+\exp(b(x - e)))}
-	    regress0 <- drm(data=table, mean~time, fct = LL.4()) #log model
-#	    regress0 <- drm(data=table, mean~time, fct = L.4()) # non log model
+	    regress0 <- drm(data=table, mean~time, fct = L.4()) # non log model
+#	    regress0 <- drm(data=table, mean~time, fct = LL.4()) #log model
 #  		regress0 <- drm(data=table, mean~time, fct = L.4(fixed=c(NA,min(table[,"mean"]),max(table[,"mean"]),NA)))
     } else {
 		if(param==3) {
@@ -233,7 +234,7 @@ qplot.logistic <- function(timeseriesdata,minval=0) {
 
 ### predict.logistic:
 ### Generates a data table based on a logistic fit object
-### Right now, only works w/ variables "mean" and "time", 
+### Right now, only works w/ variables "mean" and "time",
 ### but could easily be changed to dynamically name
 
 predict.logistic <- function(fitobject) {
